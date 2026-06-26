@@ -1,0 +1,4 @@
+Flask>=2.0
+opencv-python>=4.7
+mediapipe>=0.10,<0.10.31
+numpy>=1.24
