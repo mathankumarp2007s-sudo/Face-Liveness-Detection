@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Face Liveness Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+    <div class="app-shell">
+        <header>
+            <h1>Face Liveness Detection</h1>
+            <p>Real-time live face verification using webcam, OpenCV, and MediaPipe.</p>
+        </header>
+
+        <section class="video-card">
+            <div class="video-frame">
+                <img id="video-stream" src="{{ url_for('video_feed') }}" alt="Live webcam feed" />
+            </div>
+            <aside class="status-panel">
+                <h2>Detection Results</h2>
+                <div class="status-row"><span>Status:</span><strong id="live-status">Loading...</strong></div>
+                <div class="status-row"><span>Blink Count:</span><strong id="blink-count">0</strong></div>
+                <div class="status-row"><span>Head Movement:</span><strong id="head-movement">0px</strong></div>
+                <div class="status-row"><span>Anti-Spoof Score:</span><strong id="spoof-score">0%</strong></div>
+                <div class="info-block" id="detail-text">Initializing camera...</div>
+
+                <div class="camera-settings">
+                    <h3>Camera Settings</h3>
+                    <div class="setting-group">
+                        <label for="camera-index">Camera Index:</label>
+                        <select id="camera-index">
+                            <option value="0" selected>Camera 0 (Default)</option>
+                            <option value="1">Camera 1</option>
+                            <option value="2">Camera 2</option>
+                            <option value="3">Camera 3</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label for="camera-backend">API Backend:</label>
+                        <select id="camera-backend">
+                            <option value="DSHOW" selected>DirectShow (DSHOW)</option>
+                            <option value="MSMF">Media Foundation (MSMF)</option>
+                            <option value="DEFAULT">Default Backend</option>
+                        </select>
+                    </div>
+                    <button id="apply-camera-settings">Restart Camera</button>
+                </div>
+            </aside>
+        </section>
+    </div>
+
+    <script>
+        async function fetchStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                document.getElementById('live-status').textContent = data.status;
+                document.getElementById('blink-count').textContent = data.blink_count;
+                document.getElementById('head-movement').textContent = data.head_movement;
+                document.getElementById('spoof-score').textContent = `${data.spoof_score}%`;
+                document.getElementById('detail-text').textContent = data.detail;
+            } catch (error) {
+                document.getElementById('live-status').textContent = 'Connection lost';
+                document.getElementById('detail-text').textContent = 'Unable to reach the server.';
+            }
+        }
+
+        setInterval(fetchStatus, 500);
+        window.addEventListener('load', fetchStatus);
+
+        document.getElementById('apply-camera-settings').addEventListener('click', () => {
+            const index = document.getElementById('camera-index').value;
+            const backend = document.getElementById('camera-backend').value;
+            const videoStream = document.getElementById('video-stream');
+            
+            videoStream.src = "";
+            document.getElementById('live-status').textContent = 'Restarting camera...';
+            document.getElementById('detail-text').textContent = 'Connecting to selected camera device...';
+
+            setTimeout(() => {
+                videoStream.src = `/video_feed?index=${index}&backend=${backend}`;
+            }, 200);
+        });
+    </script>
+</body>
+</html>
